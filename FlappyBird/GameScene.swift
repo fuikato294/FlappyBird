@@ -6,13 +6,15 @@
 //
 
 import SpriteKit
+import AVFoundation
 
-class GameScene: SKScene, SKPhysicsContactDelegate {
+class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate {
     
     var scrollNode:SKNode!
     var wallNode:SKNode!
     var flyNode:SKNode!  //add
     var bird:SKSpriteNode!
+    var audioPlayer:AVAudioPlayer!
     
     // 衝突判定カテゴリー
     let birdCategory: UInt32 = 1 << 0       // 0...00001
@@ -62,8 +64,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         setupScoreLabel()
         
+        // 再生する audio ファイルのパスを取得
+        let audioPath = Bundle.main.path(forResource: "Sound_effect", ofType:"mp3")!
+        let audioUrl = URL(fileURLWithPath: audioPath)
+        
+        // auido を再生するプレイヤーを作成する
+        var audioError:NSError?
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: audioUrl)
+        } catch let error as NSError {
+            audioError = error
+            audioPlayer = nil
+        }
+        
+        // エラーが起きたとき
+        if let error = audioError {
+            print("Error \(error.localizedDescription)")
+        }
+        
+        audioPlayer.delegate = self
+        audioPlayer.prepareToPlay()
     }
-
+    
     func setupGround() {
         // 地面の画像を読み込む
         let groundTexture = SKTexture(imageNamed: "ground")
@@ -274,7 +296,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let createFlyAnimation = SKAction.run({
             // 壁関連のノードを乗せるノードを作成
             let fly = SKNode()
-            fly.position = CGPoint(x: self.frame.size.width + flyTexture.size().width / 2, y: 0)
+            fly.position = CGPoint(x: self.frame.size.width / 2 + flyTexture.size().width / 2, y: 0)
             fly.zPosition = -10 // 雲より手前、地面より奥
 
             // 0〜random_y_rangeまでのランダム値を生成
@@ -385,6 +407,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 userDefaults.set(bestScore, forKey: "BEST")
                 userDefaults.synchronize()
             }
+        } else if (contact.bodyA.categoryBitMask & flyCategory) == flyCategory || (contact.bodyB.categoryBitMask & flyCategory) == flyCategory {
+            if (contact.bodyA.categoryBitMask & flyCategory) == flyCategory {
+                print("Fly ScoreUp")
+                flyscore += 1
+                flyLabelNode.text = "Fly Score:\(flyscore)"
+                contact.bodyA.node?.removeFromParent() // Aがハエのとき、Aを消す
+            } else {
+                print("Fly ScoreUp")
+                flyscore += 1
+                flyLabelNode.text = "Fly Score:\(flyscore)"
+                contact.bodyB.node?.removeFromParent() // Bがハエのとき、Bを消す
+            }
         } else {
             // 壁か地面と衝突した
             print("GameOver")
@@ -400,17 +434,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             })
         }
         
-        if (contact.bodyA.categoryBitMask & flyCategory) == flyCategory {
-            print("Fly ScoreUp")
-            flyscore += 1
-            flyLabelNode.text = "Fly Score:\(flyscore)"
-            contact.bodyA.node?.removeFromParent() // Aがハエのとき、Aを消す
-        } else {
-            print("Fly ScoreUp")
-            flyscore += 1
-            flyLabelNode.text = "Fly Score:\(flyscore)"
-            contact.bodyB.node?.removeFromParent() // Bがハエのとき、Bを消す
-        }
     }
     
     func restart() {
