@@ -311,22 +311,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate {
             // スプライトに物理演算を設定する
             under.physicsBody = SKPhysicsBody(rectangleOf: flyTexture.size())
             under.physicsBody?.categoryBitMask = self.flyCategory
+            under.physicsBody?.contactTestBitMask = self.birdCategory
+            under.physicsBody?.isDynamic = false
 
             // 衝突の時に動かないように設定する
             under.physicsBody?.isDynamic = false
 
             fly.addChild(under)
             
-            // ハエアイテムスコア用のノード
-            let flyNode = SKNode()
-            flyNode.position = CGPoint(x: under.size.width + birdSize.width / 2, y: self.frame.height / 2)
-            flyNode.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: under.size.width, height: self.frame.size.height))
-            flyNode.physicsBody?.isDynamic = false
-            flyNode.physicsBody?.categoryBitMask = self.flyCategory
-            flyNode.physicsBody?.contactTestBitMask = self.birdCategory
-
-            fly.addChild(flyNode)
-
             fly.run(flyAnimation)
 
             self.flyNode.addChild(fly)
@@ -409,11 +401,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate {
             }
         } else if (contact.bodyA.categoryBitMask & flyCategory) == flyCategory || (contact.bodyB.categoryBitMask & flyCategory) == flyCategory {
             if (contact.bodyA.categoryBitMask & flyCategory) == flyCategory {
+                audioPlayer.play()
                 print("Fly ScoreUp")
                 flyscore += 1
                 flyLabelNode.text = "Fly Score:\(flyscore)"
                 contact.bodyA.node?.removeFromParent() // Aがハエのとき、Aを消す
             } else {
+                audioPlayer.play()
                 print("Fly ScoreUp")
                 flyscore += 1
                 flyLabelNode.text = "Fly Score:\(flyscore)"
