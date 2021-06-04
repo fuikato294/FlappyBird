@@ -304,13 +304,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate, AVAudioPlayerDelegate {
             // Y軸の下限にランダムな値を足して、下の壁のY座標を決定
             let under_fly_y = under_fly_lowest_y + random_y
 
-            // 下側の壁を作成
+            // ハエ（under）を作成
             let under = SKSpriteNode(texture: flyTexture)
             under.position = CGPoint(x: 0, y: under_fly_y)
             
             // スプライトに物理演算を設定する
             under.physicsBody = SKPhysicsBody(rectangleOf: flyTexture.size())
+            // 衝突するもの（under）は、flyCategoryだよ
             under.physicsBody?.categoryBitMask = self.flyCategory
+            // under(ハエ)に衝突するのは、birdCategoryだよ
             under.physicsBody?.contactTestBitMask = self.birdCategory
             under.physicsBody?.isDynamic = false
 
